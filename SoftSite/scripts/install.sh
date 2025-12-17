@@ -24,43 +24,47 @@ echo -e "${GREEN}📦 Шаг 2/8: Установка базовых пакето
 apt install -y curl wget git vim htop ufw fail2ban build-essential software-properties-common
 
 echo ""
-echo -e "${GREEN}📦 Шаг 3/8: Установка Node.js 18${NC}"
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-apt install -y nodejs
-
-# Проверка версии
-NODE_VERSION=$(node --version)
-echo "✅ Node.js установлен: $NODE_VERSION"
+echo -e "${YELLOW}⚠️  Node.js должен быть установлен вручную (версия 18+)${NC}"
+echo "Проверка Node.js..."
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version)
+    echo "✅ Node.js установлен: $NODE_VERSION"
+else
+    echo "❌ Node.js не найден! Установите вручную:"
+    echo "   curl -fsSL https://deb.nodesource.com/setup_18.x | bash -"
+    echo "   apt install -y nodejs"
+    exit 1
+fi
 
 echo ""
-echo -e "${GREEN}📦 Шаг 4/8: Установка PM2${NC}"
+echo -e "${GREEN}📦 Шаг 3/7: Установка PM2${NC}"
 npm install -g pm2
 pm2 startup systemd -u root --hp /root
 echo "✅ PM2 установлен"
 
 echo ""
-echo -e "${GREEN}📦 Шаг 5/8: Установка PostgreSQL 14${NC}"
+echo -e "${GREEN}📦 Шаг 4/7: Установка PostgreSQL 14${NC}"
 apt install -y postgresql postgresql-contrib
 systemctl start postgresql
 systemctl enable postgresql
 echo "✅ PostgreSQL установлен"
 
 echo ""
-echo -e "${GREEN}📦 Шаг 6/8: Установка Redis${NC}"
+echo -e "${GREEN}📦 Шаг 5/7: Установка Redis${NC}"
 apt install -y redis-server
 systemctl start redis-server
 systemctl enable redis-server
 echo "✅ Redis установлен"
 
 echo ""
-echo -e "${GREEN}📦 Шаг 7/8: Установка Nginx${NC}"
+echo -e "${GREEN}📦 Шаг 6/7: Установка Nginx${NC}"
 apt install -y nginx
 systemctl start nginx
 systemctl enable nginx
 echo "✅ Nginx установлен"
 
 echo ""
-echo -e "${GREEN}📦 Шаг 8/8: Установка Certbot${NC}"
+echo -e "${GREEN}📦 Шаг 7/7: Установка Certbot${NC}"
 apt install -y certbot python3-certbot-nginx
 echo "✅ Certbot установлен"
 
