@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core Colors */
+    --primary-500: #8B5CF6;
+    --primary-600: #7C3AED;
+    --primary-700: #6D28D9;
+    --background-900: #0F0F0F;
+    --background-800: #1A1A1A;
+    --background-card: rgba(30, 30, 30, 0.85);
+    --text-100: #FFFFFF;
+    --text-300: #D4D4D4;
+    --text-500: #A0A0A0;
+    --success-500: #10B981;
+    --warning-500: #F59E0B;
+    --danger-500: #EF4444;
+    
+    /* UI Elements */
+    --border-radius-lg: 16px;
+    --border-radius-md: 12px;
+    --border-radius-sm: 8px;
+    --shadow-sm: 0 4px 12px rgba(139, 92, 246, 0.15);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+    --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    /* Layout */
+    --mobile-header-height: 60px;
+    --desktop-sidebar-width: 280px;
+    --max-width-desktop: 1440px;
+    --sidebar-breakpoint: 1024px;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background-900 text-text-100;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-600 rounded-full;
+    transition: background-color 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-500;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #7C3AED #1A1A1A;
+  }
+}
+
+@layer components {
+  /* Glass Card Effect */
+  .glass-card {
+    @apply bg-background-card/85 backdrop-blur-md border border-primary-500/20 rounded-2xl shadow-glass;
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300 hover:border-primary-500/40 hover:shadow-glass-lg hover:scale-[1.02];
+  }
+
+  /* Gradient Button */
+  .gradient-button {
+    @apply relative overflow-hidden rounded-xl px-6 py-3 font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+
+  .gradient-button:hover {
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .gradient-button:active {
+    transform: translateY(0);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #8B5CF6, #C4B5FD);
+  }
+
+  /* Animated Border */
+  .animated-border {
+    position: relative;
+  }
+
+  .animated-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #8B5CF6, #C4B5FD, #8B5CF6);
+    background-size: 200% 200%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: gradient 8s ease infinite;
+  }
+
+  /* Input Styles */
+  .input-field {
+    @apply w-full bg-background-800/50 border border-primary-500/30 rounded-xl px-4 py-3 text-text-100 placeholder:text-text-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 outline-none;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply inline-block w-6 h-6 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin;
+  }
+
+  /* Pulse Animation */
+  .pulse-ring {
+    @apply absolute inset-0 rounded-full border-2 border-primary-500 animate-ping opacity-75;
+  }
+
+  /* Floating Animation */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Page Container */
+  .page-container {
+    @apply min-h-screen px-4 py-6 md:px-8 lg:px-12;
+    max-width: var(--max-width-desktop);
+    margin: 0 auto;
+  }
+
+  /* Card Grid */
+  .card-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  /* Mobile Bottom Navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 glass-card rounded-t-3xl border-t border-primary-500/20 p-4;
+    height: var(--mobile-header-height);
+  }
+
+  /* Desktop Sidebar */
+  .desktop-sidebar {
+    @apply fixed left-0 top-0 bottom-0 glass-card border-r border-primary-500/20 p-6;
+    width: var(--desktop-sidebar-width);
+  }
+}
+
+@layer utilities {
+  /* Text Shadows */
+  .text-shadow {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Gradient Animations */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+
+  /* Hide Scrollbar */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Glassmorphism utilities */
+  .glass-effect {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+}
+
+/* Animations */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Dark mode focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background-900;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary-500/30 text-white;
+}
+
+/* Disable text selection on UI elements */
+button, .no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+

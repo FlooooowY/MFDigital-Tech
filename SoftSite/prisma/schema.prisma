@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ACCOUNTANT
+  DEVELOPER
+  SUPPORT_DEVELOPER
+}
+
+enum RequestStatus {
+  PENDING_TELEGRAM
+  AWAITING_CONTRACT
+  AWAITING_PREPAYMENT
+  READY_FOR_DEVELOPMENT
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  AWAITING_FINAL_PAYMENT
+  SUPPORT
+  COMPLETED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  CONFIRMED
+  ADJUSTED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum BusinessCategory {
+  STARTUP
+  SMB
+  ENTERPRISE
+}
+
+enum ServiceType {
+  WEBSITE
+  TELEGRAM_BOT
+  AUTOMATION
+  MOBILE_APP
+  DESIGN
+  CONSULTING
+}
+
+model User {
+  id                String    @id @default(uuid())
+  telegramId        String?   @unique
+  email             String    @unique
+  password          String
+  name              String
+  role              Role      @default(MANAGER)
+  payoutPercentage  Float     @default(5.0)
+  confirmedBalance  Decimal   @default(0) @db.Decimal(12, 2)
+  pendingBalance    Decimal   @default(0) @db.Decimal(12, 2)
+  totalEarned       Decimal   @default(0) @db.Decimal(12, 2)
+  lastWithdrawal    DateTime?
+  isActive          Boolean   @default(true)
+  skills            ServiceType[]
+  avatar            String?
+  phone             String?
+  telegramUsername  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  managedRequests       Request[]           @relation("ManagerRequests")
+  developedRequests     Request[]           @relation("DeveloperRequests")
+  withdrawalRequests    WithdrawalRequest[]
+  payoutLedger          PayoutLedger[]
+  sentMessages          Message[]           @relation("SentMessages")
+  auditLogs             AuditLog[]
+  sessions              Session[]
+
+  @@index([email])
+  @@index([telegramId])
+  @@index([role])
+}
+
+model Client {
+  id               String    @id @default(uuid())
+  telegramId       String?   @unique
+  telegramUsername String?
+  name             String
+  email            String?
+  phone            String?
+  consentGiven     Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  requests         Request[]
+  messages         Message[]         @relation("ClientMessages")
+
+  @@index([telegramId])
+}
+
+model Request {
+  id                   String          @id @default(uuid())
+  requestNumber        String          @unique
+  clientId             String
+  client               Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  managerId            String
+  manager              User            @relation("ManagerRequests", fields: [managerId], references: [id])
+  
+  developerId          String?
+  developer            User?           @relation("DeveloperRequests", fields: [developerId], references: [id])
+  
+  businessCategory     BusinessCategory
+  services             Json            // Array of { type: ServiceType, description: string, plannedAmount: number }
+  
+  initialTotalAmount   Decimal         @db.Decimal(12, 2)
+  finalTotalAmount     Decimal?        @db.Decimal(12, 2)
+  
+  supportAgreed        Boolean         @default(false)
+  supportMonthlyFee    Decimal?        @db.Decimal(12, 2)
+  
+  status               RequestStatus   @default(PENDING_TELEGRAM)
+  
+  description          String?         @db.Text
+  notes                String?         @db.Text
+  
+  contractSigned       Boolean         @default(false)
+  contractSignedAt     DateTime?
+  prepaymentReceived   Boolean         @default(false)
+  prepaymentReceivedAt DateTime?
+  finalPaymentReceived Boolean         @default(false)
+  finalPaymentReceivedAt DateTime?
+  
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  completedAt          DateTime?
+
+  // Relations
+  contract             Contract?
+  payments             Payment[]
+  payoutLedger         PayoutLedger[]
+  messages             Message[]
+  statusHistory        StatusHistory[]
+
+  @@index([requestNumber])
+  @@index([clientId])
+  @@index([managerId])
+  @@index([developerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Contract {
+  id               String    @id @default(uuid())
+  requestId        String    @unique
+  request          Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  documentUrl      String?
+  signedDocumentUrl String?
+  
+  signedByClient   Boolean   @default(false)
+  signedAt         DateTime?
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([requestId])
+}
+
+model Payment {
+  id               String    @id @default(uuid())
+  requestId        String
+  request          Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  amount           Decimal   @db.Decimal(12, 2)
+  paymentType      String    // 'prepayment', 'final', 'support'
+  
+  proofUrl         String?
+  ocrText          String?   @db.Text
+  
+  verified         Boolean   @default(false)
+  verifiedAt       DateTime?
+  verifiedBy       String?   // userId who verified
+  
+  notes            String?   @db.Text
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([requestId])
+  @@index([paymentType])
+  @@index([verified])
+}
+
+model PayoutLedger {
+  id               String        @id @default(uuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  requestId        String
+  request          Request       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  serviceType      ServiceType?  // null for manager payouts
+  
+  initialAmount    Decimal       @db.Decimal(12, 2)
+  finalAmount      Decimal?      @db.Decimal(12, 2)
+  
+  status           PayoutStatus  @default(PENDING)
+  
+  adjustmentReason String?       @db.Text
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([requestId])
+  @@index([status])
+}
+
+model WithdrawalRequest {
+  id               String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount           Decimal          @db.Decimal(12, 2)
+  
+  contactMethod    String           // 'telegram', 'bank_card', 'crypto'
+  contactDetails   String           // Encrypted contact info
+  
+  status           WithdrawalStatus @default(PENDING)
+  
+  processedBy      String?          // userId who processed
+  processedAt      DateTime?
+  
+  rejectionReason  String?          @db.Text
+  
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Message {
+  id               String    @id @default(uuid())
+  requestId        String
+  request          Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  senderId         String?
+  sender           User?     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  clientId         String?
+  client           Client?   @relation("ClientMessages", fields: [clientId], references: [id])
+  
+  content          String    @db.Text
+  
+  containsSuspicious Boolean @default(false)
+  suspiciousKeywords String?  @db.Text
+  
+  isFromBot        Boolean   @default(false)
+  telegramMessageId Int?
+  
+  createdAt        DateTime  @default(now())
+
+  @@index([requestId])
+  @@index([senderId])
+  @@index([clientId])
+  @@index([containsSuspicious])
+  @@index([createdAt])
+}
+
+model StatusHistory {
+  id               String        @id @default(uuid())
+  requestId        String
+  request          Request       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  fromStatus       RequestStatus?
+  toStatus         RequestStatus
+  
+  changedBy        String        // userId
+  reason           String?       @db.Text
+  
+  createdAt        DateTime      @default(now())
+
+  @@index([requestId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action           String    // 'LOGIN', 'REQUEST_CREATED', 'PAYMENT_VERIFIED', etc.
+  details          Json?
+  
+  ipAddress        String?
+  userAgent        String?   @db.Text
+  
+  createdAt        DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token            String    @unique
+  refreshToken     String    @unique
+  
+  ipAddress        String?
+  userAgent        String?   @db.Text
+  
+  expiresAt        DateTime
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@index([refreshToken])
+  @@index([expiresAt])
+}
+

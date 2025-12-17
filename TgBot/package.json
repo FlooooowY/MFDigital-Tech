@@ -1,0 +1,31 @@
+{
+  "name": "agency-telegram-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telegram bot for Agency Management System",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "@prisma/client": "^5.21.0",
+    "dotenv": "^16.4.0",
+    "redis": "^4.7.0",
+    "axios": "^1.7.0",
+    "tesseract.js": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.8.0",
+    "tsx": "^4.19.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "prisma": "^5.21.0"
+  }
+}
+
